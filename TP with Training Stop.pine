@@ -1,0 +1,23 @@
+//@version=5
+strategy("TP with Trailing Stop", overlay=true)
+
+// TP Levels
+tp1 = close * 1.02   // TP at +2%
+tp2 = close * 1.05   // TP at +5%
+
+// Stop loss
+stopLoss = close * 0.98  // Stop loss at -2%
+
+// Trailing stop settings
+trailStopPerc = 1.5  // 1.5% trailing stop
+
+// Entry Condition
+longCondition = ta.crossover(ta.sma(close, 50), ta.sma(close, 200))
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+// First TP (Partial Exit)
+strategy.exit("TP1", from_entry="Long", qty_percent=50, limit=tp1, stop=stopLoss)
+
+// Second TP (Partial Exit + Trailing Stop)
+strategy.exit("TP2", from_entry="Long", qty_percent=50, limit=tp2, trail_points=close * (trailStopPerc / 100))
