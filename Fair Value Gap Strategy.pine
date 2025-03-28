@@ -1,0 +1,85 @@
+//@version=6
+strategy("Fair Value Gap Strategy", overlay=true, margin_long=100, margin_short=100)
+
+// —————— Input Parameters ——————
+fvgLookback = input.int(50, "FVG Lookback Period", minval=10)
+atrLength = input(14, "ATR Length")
+riskReward = input(2.0, "Risk/Reward Ratio")
+fvgConfirmationBars = input(1, "FVG Confirmation Bars")
+
+// —————— Core FVG Detection ——————
+detectFVG() =>
+    [bearishFVG, bullishFVG] = if barstate.isconfirmed
+        // Bullish FVG: Current low > high 2 bars back
+        bullFVG = low > high[2]
+        // Bearish FVG: Current high < low 2 bars back
+        bearFVG = high < low[2]
+        [bearFVG, bullFVG]
+    else
+        [false, false]
+
+var fvgArray = array.new<array>(0)  // Stores [type, top, bottom, entryBar]
+
+// —————— FVG Management System ——————
+if barstate.isconfirmed
+    [bearFVG, bullFVG] = detectFVG()
+    
+    // Add new FVGs to array
+    if bullFVG
+        array.unshift(fvgArray, array.from("bull", high[2], low, bar_index))
+    if bearFVG
+        array.unshift(fvgArray, array.from("bear", low[2], high, bar_index))
+    
+    // Cleanup old FVGs (beyond lookback period)
+    while array.size(fvgArray) > 0 and (bar_index - array.get(array.get(fvgArray, array.size(fvgArray)-1), 3)) > fvgLookback
+        array.pop(fvgArray)
+
+// —————— Visual Representation ——————
+for fvg in fvgArray
+    fvgType = array.get(fvg, 0)
+    topPrice = array.get(fvg, 1)
+    bottomPrice = array.get(fvg, 2)
+    entryBar = array.get(fvg, 3)
+    
+    boxColor = fvgType == "bull" ? color.new(color.green, 85) : color.new(color.red, 85)
+    box.new(left=entryBar-2, right=entryBar+2, top=topPrice, bottom=bottomPrice, 
+          border_color=color.transparent, bgcolor=boxColor)
+
+// —————— Trading Logic ——————
+var tradeActive = false
+var currentFVG = na
+
+if not tradeActive and array.size(fvgArray) > 0
+    for i = 0 to array.size(fvgArray)-1 by 1
+        fvg = array.get(fvgArray, i)
+        fvgType = array.get(fvg, 0)
+        top = array.get(fvg, 1)
+        bottom = array.get(fvg, 2)
+        
+        // Entry Conditions
+        longCondition = fvgType == "bull" and close > top and barssince(bar_index - array.get(fvg, 3)) >= fvgConfirmationBars
+        shortCondition = fvgType == "bear" and close < bottom and barssince(bar_index - array.get(fvg, 3)) >= fvgConfirmationBars
+        
+        // Trade Execution
+        atr = ta.atr(atrLength)
+        if longCondition and not tradeActive
+            stopLoss = bottom - atr
+            takeProfit = close + (close - stopLoss) * riskReward
+            strategy.entry("Long", strategy.long)
+            strategy.exit("Long Exit", "Long", stop=stopLoss, limit=takeProfit)
+            tradeActive := true
+            currentFVG := fvg
+            break
+            
+        if shortCondition and not tradeActive
+            stopLoss = top + atr
+            takeProfit = close - (stopLoss - close) * riskReward
+            strategy.entry("Short", strategy.short)
+            strategy.exit("Short Exit", "Short", stop=stopLoss, limit=takeProfit)
+            tradeActive := true
+            currentFVG := fvg
+            break
+
+// Reset trade state on close
+if barstate.isrealtime
+    tradeActive := false
