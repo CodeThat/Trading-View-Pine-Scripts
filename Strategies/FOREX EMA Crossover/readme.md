@@ -63,13 +63,13 @@ inSession = not na(time(timeframe.period, morningSession)) or
 ## 📊 Live Table Features
 
 • Real-time session tracking: 
-   Morning 🌅 (07:00-11: CT) | Evening 🌙 (19:00-02:00 CT) | Closed 🔒
+  Morning 🌅 (07:00-11: CT) | Evening 🌙 (19:00-02:00 CT) | Closed 🔒
    
 • Position status:   
-   ▲ LONG 🟢 | ▼ SHORT 🔴 | FLAT ⚪ (color-coded indicators)
+  ▲ LONG 🟢 | ▼ SHORT 🔴 | FLAT ⚪ (color-coded indicators)
    
 • Active stop price: 
-   🛑 Dynamic ATR-based value in orange (#FFA500)
+  🛑 Dynamic ATR-based value in orange (#FFA500)
 
 ## 🚀 Installation
 1. Open TradingView
