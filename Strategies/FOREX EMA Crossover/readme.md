@@ -62,15 +62,15 @@ inSession = not na(time(timeframe.period, morningSession)) or
 
 ## 📊 Live Table Features
 
-• Real-time session tracking: 
-  Morning 🌅 (07:00-11: CT) | Evening 🌙 (19:00-02:00 CT) | Closed 🔒
+• **Real-time session tracking**:  
+  🌅 Morning (07:00-11:00 CT) | 🌙 Evening (19:00-02:00 CT) | 🔒 Closed  
    
-• Position status:   
-  ▲ LONG 🟢 | ▼ SHORT 🔴 | FLAT ⚪ (color-coded indicators)
+• **Position status**:  
+  ▲ LONG 🟢 | ▼ SHORT 🔴 | ⚪ FLAT  
    
-• Active stop price: 
-  🛑 Dynamic ATR-based value in orange (#FFA500)
-
+• **Active stop price**:  
+  🛑 Dynamic ATR-based value in `#FFA500` orange
+  
 ## 🚀 Installation
 1. Open TradingView
 2. Create new Pine Script strategy
