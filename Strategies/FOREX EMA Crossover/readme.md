@@ -33,20 +33,20 @@ A dynamic Forex trading strategy combining EMA crossovers with adaptive ATR-base
 
 ### Entry Conditions
 - **▲ LONG**:
-  ```pine
+  ```.pine
   bullish = ta.crossover(emaShort, emaLong) and close > emaTrendFilter
   inSession = not na(time(timeframe.period, morningSession)) or 
              (not na(time(timeframe.period, eveningSession)) and tradeEvening)
 
 - **▲ SHORT**:
- ```pine
+ ```.pine
 bearish = ta.crossunder(emaShort, emaLong) and close < emaTrendFilter
 inSession = not na(time(timeframe.period, morningSession)) or 
            (not na(time(timeframe.period, eveningSession)) and tradeEvening)
 ```
 ### Exit Management
 - **ATR Stop Calculation**:
-```pine
+```.pine
   currentMultiplier = not na(time(timeframe.period, morningSession)) ? dayMultiplier : nightMultiplier
   longStop = low - (atrValue * currentMultiplier)
   shortStop = high + (atrValue * currentMultiplier)
