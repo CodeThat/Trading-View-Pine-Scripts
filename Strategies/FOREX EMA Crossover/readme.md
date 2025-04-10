@@ -60,10 +60,14 @@ inSession = not na(time(timeframe.period, morningSession)) or
 | Long Stop | Dynamic protection | `#00BFA5` (Teal) |
 | Short Stop | Risk management | `#D50000` (Red) |
 
-**Live Table Features**:
-- Session status (Morning/Evening/Closed)
-- Current position with colored indicators
-- Active stop price display
+## 📊 Live Table Features
+
+• Real-time session tracking: 
+   Morning 🌅 (07:00-11: CT) | Evening 🌙 (19:00-02:00 CT) | Closed 🔒
+• Position status: 
+   ▲ LONG 🟢 | ▼ SHORT 🔴 | FLAT ⚪ (color-coded indicators)
+• Active stop price: 
+   🛑 Dynamic ATR-based value in orange (#FFA500)
 
 ## 🚀 Installation
 1. Open TradingView
