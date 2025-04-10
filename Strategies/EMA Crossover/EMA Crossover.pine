@@ -1,0 +1,30 @@
+//@version=6
+strategy("EMA Crossover Strategy", overlay=true)
+
+// Input parameters
+emaShortLength = input.int(50, "Short EMA Length")
+emaLongLength = input.int(200, "Long EMA Length")
+ema20Length = input.int(20, "20 EMA Length")  // Input for the 20 EMA
+ema5Length = input.int(5, "5 EMA Length")  // Input for the 5 EMA
+vwapEnabled = input.bool(true, "Use VWAP?")
+
+// Indicators
+emaShort = ta.ema(close, emaShortLength)
+emaLong = ta.ema(close, emaLongLength)
+ema20 = ta.ema(close, ema20Length)  // Calculate the 20 EMA
+ema5 = ta.ema(close, ema5Length)  // Calculate the 5 EMA
+vwap = ta.vwap(close)
+
+// Entry Conditions
+emaBullishCross = ta.crossover(emaShort, emaLong)
+emaBearishCross = ta.crossunder(emaShort, emaLong)
+
+longCondition = emaBullishCross and close > emaShort and (vwapEnabled ? close > vwap : true)
+shortCondition = emaBearishCross and close < emaShort and (vwapEnabled ? close < vwap : true)
+
+// Main Chart Plots
+plot(emaShort, "50 EMA", color=color.blue, linewidth=2)
+plot(emaLong, "200 EMA", color=color.red, linewidth=2)
+plot(ema20, "20 EMA", color=color.purple, linewidth=2)  // Plot the 20 EMA
+plot(ema5, "5 EMA", color=color.orange, linewidth=2)  // Plot the 5 EMA
+plot(vwapEnabled ? vwap : na, "VWAP", color=color.green, linewidth=2)
