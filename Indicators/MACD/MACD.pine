@@ -1,0 +1,19 @@
+//@version=6
+indicator("MACD Indicator", overlay=false)
+
+// MACD Inputs
+macdShort = input.int(3, "MACD Short")
+macdLong = input.int(10, "MACD Long")
+macdSignal = input.int(16, "MACD Signal")
+
+// MACD Calculation
+[macdLine, signalLine, _] = ta.macd(close, macdShort, macdLong, macdSignal)
+macdHist = macdLine - signalLine
+
+// Zero Line
+hline(0, "Zero Line", color=color.gray)
+
+// MACD Plots
+plot(macdLine, "MACD Line", color=color.blue, linewidth=2)
+plot(signalLine, "Signal Line", color=color.red, linewidth=2)
+plot(macdHist, "Histogram", color=macdHist >= 0 ? color.green : color.red, style=plot.style_columns)
