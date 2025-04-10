@@ -33,7 +33,7 @@ A dynamic Forex trading strategy combining EMA crossovers with adaptive ATR-base
 
 ### Entry Conditions
 - **▲ LONG**:
-  ```.pinescript
+  ```.javascript
   bullish = ta.crossover(emaShort, emaLong) and close > emaTrendFilter
   inSession = not na(time(timeframe.period, morningSession)) or 
              (not na(time(timeframe.period, eveningSession)) and tradeEvening)
