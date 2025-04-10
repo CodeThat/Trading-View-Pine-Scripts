@@ -1,0 +1,64 @@
+//@version=6
+strategy("IBKR Safe Forex Strategy", overlay=true, 
+  currency=currency.USD, 
+  initial_capital=2000, 
+  default_qty_type=strategy.cash, 
+  commission_type=strategy.commission.percent, 
+  commission_value=0.0002,
+  slippage=2)
+
+// ===== SAFE MARGIN PARAMETERS =====
+leverage = input.int(10, "Leverage", minval=1, maxval=50) // 10:1 leverage cap
+riskPercent = input.float(1.0, "Risk %", minval=0.1, maxval=2)
+minLotSize = 1000 // 0.01 lots minimum (IBKR requirement)
+
+// ===== CORE STRATEGY =====
+// EMAs
+emaShort = ta.ema(close, 10)
+emaLong = ta.ema(close, 50)
+emaFilter = ta.ema(close, 200)
+
+// ATR Stop
+atrLength = 14
+atrValue = ta.rma(ta.tr(true), atrLength)
+stopMultiplier = 3 // 3x ATR for wider stops
+
+// Session Filter (London/NY overlap)
+inSession = not na(time(timeframe.period, "0700-1100"))
+
+// ===== RISK MANAGEMENT =====
+pipValue = 0.0001
+
+calcPositionSize(entryPrice, stopDistance) =>
+    riskAmount = strategy.equity * (riskPercent / 100)
+    units = riskAmount / (stopDistance * pipValue)
+    marginRequired = (units * entryPrice) / leverage
+    
+    // Ensure we stay within account limits
+    unitsAdjusted = math.max(math.min(units, (strategy.equity * leverage)/entryPrice), minLotSize)
+    [unitsAdjusted, marginRequired]
+
+// ===== EXECUTION =====
+longCondition = ta.crossover(emaShort, emaLong) and close > emaFilter and inSession
+shortCondition = ta.crossunder(emaShort, emaLong) and close < emaFilter and inSession
+
+if longCondition
+    stopDistance = (close - (low - atrValue * stopMultiplier)) / pipValue
+    [units, marginReq] = calcPositionSize(close, stopDistance)
+    
+    if marginReq <= strategy.equity * 0.5 // Max 50% equity used
+        strategy.entry("Long", strategy.long, qty=units)
+        strategy.exit("Long Exit", "Long", stop=low - atrValue * stopMultiplier)
+
+if shortCondition
+    stopDistance = ((high + atrValue * stopMultiplier) - close) / pipValue
+    [units, marginReq] = calcPositionSize(close, stopDistance)
+    
+    if marginReq <= strategy.equity * 0.5 // Max 50% equity used
+        strategy.entry("Short", strategy.short, qty=units)
+        strategy.exit("Short Exit", "Short", stop=high + atrValue * stopMultiplier)
+
+// ===== VISUALS =====
+plot(emaShort, "Fast EMA", color.blue)
+plot(emaLong, "Slow EMA", color.orange)
+plot(emaFilter, "Trend Filter", color.purple, 2)
