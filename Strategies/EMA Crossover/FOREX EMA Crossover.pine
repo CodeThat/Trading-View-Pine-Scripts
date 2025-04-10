@@ -1,0 +1,78 @@
+//@version=6
+strategy("Forex EMA Strategy with Dashed Stops & Table", overlay=true, currency=currency.USD, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=2)
+
+// ===== INPUTS =====
+// EMA Parameters
+emaShortLength = input.int(10, "Fast EMA", minval=1)
+emaLongLength = input.int(50, "Slow EMA", minval=1)
+trendFilterLength = input.int(200, "Trend Filter EMA")
+
+// Session Parameters (CT)
+morningSession = input.session("0700-1100", "Morning")
+eveningSession = input.session("1900-0200", "Evening")
+tradeEvening = input.bool(true, "Enable Evening")
+
+// ATR Parameters
+atrLength = input.int(14, "ATR Length")
+dayMultiplier = input.float(2.0, "Day Multiplier")
+nightMultiplier = input.float(1.5, "Night Multiplier")
+
+// ===== CORE LOGIC =====
+// EMAs
+emaShort = ta.ema(close, emaShortLength)
+emaLong = ta.ema(close, emaLongLength)
+emaTrendFilter = ta.ema(close, trendFilterLength)
+
+// ATR Stops
+trueRange = ta.tr(true)
+atrValue = ta.rma(trueRange, atrLength)
+currentMultiplier = not na(time(timeframe.period, morningSession)) ? dayMultiplier : nightMultiplier
+longStop = low - (atrValue * currentMultiplier)
+shortStop = high + (atrValue * currentMultiplier)
+
+// Conditions
+bullish = ta.crossover(emaShort, emaLong) and close > emaTrendFilter
+bearish = ta.crossunder(emaShort, emaLong) and close < emaTrendFilter
+inSession = not na(time(timeframe.period, morningSession)) or (not na(time(timeframe.period, eveningSession)) and tradeEvening)
+
+// ===== STRATEGY =====
+if bullish and inSession
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=longStop)
+
+if bearish and inSession
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=shortStop)
+
+// ===== VISUALS =====
+// Conditional Dashed Stop Lines 
+plot(strategy.position_size > 0 ? longStop : na, "Long Stop", color.new(#00BFA5, 0), 1, plot.style_linebr)
+plot(strategy.position_size < 0 ? shortStop : na, "Short Stop", color.new(#D50000, 0), 1, plot.style_linebr)
+
+
+// EMA Lines
+plot(emaShort, "Fast EMA", color.new(#2962FF, 0), 1)
+plot(emaLong, "Slow EMA", color.new(#FF6D00, 0), 1)
+plot(emaTrendFilter, "Trend Filter", color.new(#8E24AA, 0), 2)
+
+// ===== LIVE INFORMATION TABLE =====
+var table infoTable = table.new(position.bottom_center, 5, 1, border_width=2)
+if barstate.islast
+    // Session Status
+    sessionStatus = not na(time(timeframe.period, morningSession)) ? "Morning" : (not na(time(timeframe.period, eveningSession)) and tradeEvening ? "Evening" : "Closed")
+    sessionColor = sessionStatus == "Morning" ? color.green : sessionStatus == "Evening" ? color.blue : color.gray
+    
+    // Position Status
+    positionStatus = strategy.position_size > 0 ? "▲ LONG" : 
+                   strategy.position_size < 0 ? "▼ SHORT" : "FLAT"
+    positionColor = strategy.position_size > 0 ? color.green : 
+                  strategy.position_size < 0 ? color.red : color.gray
+    
+    // Current Stop
+    currentStop = strategy.position_size > 0 ? longStop : strategy.position_size < 0 ? shortStop : na
+    
+    table.cell(infoTable, 0, 0, "Session:", text_color=color.white)
+    table.cell(infoTable, 1, 0, sessionStatus, text_color=sessionColor)
+    table.cell(infoTable, 2, 0, "Position:", text_color=color.white)
+    table.cell(infoTable, 3, 0, positionStatus, text_color=positionColor)
+    table.cell(infoTable, 4, 0, "Stop: " + str.tostring(currentStop, "#.#####"), text_color=color.orange)
