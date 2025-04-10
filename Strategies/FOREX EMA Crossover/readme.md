@@ -1,4 +1,4 @@
-# 📈 Forex EMA Strategy with Dashed Stops & Live Table
+# 📈 Forex EMA Strategy with Dynamic Stops & Live Information Table
 
 ![PineScript](https://img.shields.io/badge/PineScript-v6-yellowgreen) ![TradingView](https://img.shields.io/badge/Platform-TradingView-blue) ![License](https://img.shields.io/badge/License-MIT-red)
 
