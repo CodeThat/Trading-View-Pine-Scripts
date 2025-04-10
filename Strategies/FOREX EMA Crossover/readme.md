@@ -33,20 +33,20 @@ A dynamic Forex trading strategy combining EMA crossovers with adaptive ATR-base
 
 ### Entry Conditions
 - **▲ LONG**:
-  ```pinescript
+  ```pine
   bullish = ta.crossover(emaShort, emaLong) and close > emaTrendFilter
   inSession = not na(time(timeframe.period, morningSession)) or 
              (not na(time(timeframe.period, eveningSession)) and tradeEvening)
 
 - **▲ SHORT**:
- ```pinescript
+ ```pine
 bearish = ta.crossunder(emaShort, emaLong) and close < emaTrendFilter
 inSession = not na(time(timeframe.period, morningSession)) or 
            (not na(time(timeframe.period, eveningSession)) and tradeEvening)
 ```
 ### Exit Management
 - **ATR Stop Calculation**:
-```pinescript
+```pine
   currentMultiplier = not na(time(timeframe.period, morningSession)) ? dayMultiplier : nightMultiplier
   longStop = low - (atrValue * currentMultiplier)
   shortStop = high + (atrValue * currentMultiplier)
@@ -70,11 +70,6 @@ inSession = not na(time(timeframe.period, morningSession)) or
 2. Create new Pine Script strategy
 3. Paste entire code
 4. Adjust parameters in "Inputs" tab
-
-## 💡 Customization Ideas
-- Adjust EMA lengths for different timeframes
-- Modify session times for specific markets
-- Experiment with ATR multipliers (1.0-3.0 range)
 
 ## 💡 Customization Ideas
 - Adjust EMA lengths for different timeframes
