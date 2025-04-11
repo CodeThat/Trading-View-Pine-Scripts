@@ -8,7 +8,7 @@
 // Is Exit long triggering before SL, on occasion?
 // Implement trailing SL (eg. if price is above 5% in profit, slide SL above entry to ensure profit)
 
-strategy("Reg T Margin Stock Strategy", overlay=true, initial_capital=2000, default_qty_type=strategy.cash, margin_long=50, margin_short=100, commission_type=strategy.commission.percent, commission_value=0.000, slippage=2)
+strategy("Reg T Margin Stock Strategy", overlay=true, initial_capital=2000, default_qty_type=strategy.cash, margin_long=50, margin_short=100, commission_type=strategy.commission.cash_per_contract, commission_value=0.000, slippage=2)
 
 // ===== RISK PARAMETERS =====
 riskPercent = input.float(1, "Risk %", minval=0.1, maxval=5)
