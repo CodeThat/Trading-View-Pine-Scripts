@@ -1,0 +1,80 @@
+//@version=6
+
+// TODO:
+// Wait one minute to confirm trend direction or momentum is increasing or pecentage deviation
+// For Strategy Testing:  Determine amount of buy
+// No commission in IBKR Lite
+// Implement 3-5-7 trading rule
+// Is Exit long triggering before SL, on occasion?
+// Implement trailing SL (eg. if price is above 5% in profit, slide SL above entry to ensure profit)
+
+strategy("Reg T Margin Stock Strategy", overlay=true, initial_capital=2000, default_qty_type=strategy.cash, margin_long=50, margin_short=100, commission_type=strategy.commission.percent, commission_value=0.000, slippage=2)
+
+// ===== RISK PARAMETERS =====
+riskPercent = input.float(1, "Risk %", minval=0.1, maxval=5)
+atrLength = input.int(14, "ATR Period")
+atrMultiplier = input.float(2, "ATR Multiplier")
+
+// ===== CORE CALCULATIONS =====
+var float lastShares = na  // store last valid share size for dashboard 
+var float stopPrice = na
+emaFast = ta.ema(close, 10)
+emaSlow = ta.ema(close, 50)
+emaFilter = ta.ema(close, 200)
+atr = ta.rma(ta.tr, atrLength)
+
+bullish = ta.crossover(emaFast, emaSlow) and close > emaFilter
+bullishConfirm = bullish[1] and close > close[1]
+bearish = ta.crossunder(emaFast, emaSlow) and close < emaFilter
+
+// ===== POSITION SIZING =====
+calcPositionSize(price, stopDistance) =>
+    riskAmount = strategy.equity * (riskPercent / 100)
+    shares = riskAmount / (stopDistance * price)
+    marginRequired = (shares * price) * 0.5
+    marginRequired > strategy.equity * 0.5 ? 0 : math.floor(shares)
+
+// ===== TRADE EXECUTION =====
+if bullishConfirm
+    stopPrice := close - (atr * atrMultiplier)
+    shares = calcPositionSize(close, atr * atrMultiplier)
+    lastShares := shares
+    if shares > 0
+        strategy.entry("ROKU Long", strategy.long, qty=shares)
+        strategy.exit("Exit Long", from_entry="ROKU Long", stop=stopPrice, limit=close * 1.20)
+
+if bearish
+    stopPrice := close + (atr * atrMultiplier)
+    shares = calcPositionSize(close, atr * atrMultiplier)
+    if shares > 0
+        strategy.entry("ROKU Short", strategy.short, qty=shares)
+        strategy.exit("Exit Short", from_entry="ROKU Short", stop=stopPrice, limit=close * 0.80)
+
+vwap = ta.vwap
+
+// ===== VISUAL ELEMENTS =====
+plot(emaFast, "10 EMA", color=color.blue)
+plot(emaSlow, "50 EMA", color=color.orange)
+plot(emaFilter, "200 EMA", color=color.purple, linewidth=2)
+plot(stopPrice, "Stop", color=color.red, style=plot.style_linebr)
+plot(vwap, "VWAP", color=color.green, linewidth=2)
+
+// ===== MARGIN DASHBOARD =====
+var table marginTable = table.new(position.bottom_right, 3, 4)
+if barstate.islast
+    table.cell(marginTable, 0, 0, "Reg T Margin", bgcolor=color.gray)
+    table.cell(marginTable, 1, 0, "ROKU Price", bgcolor=color.gray)
+    table.cell(marginTable, 2, 0, "Buying Power", bgcolor=color.gray)
+
+    table.cell(marginTable, 0, 1, "Equity")
+    table.cell(marginTable, 1, 1, str.tostring(close, format.mintick))
+    table.cell(marginTable, 2, 1, str.tostring(strategy.equity * 2, format.mintick))
+
+    table.cell(marginTable, 0, 2, "Risk/Trade")
+    table.cell(marginTable, 1, 2, str.tostring(atr * atrMultiplier, format.mintick), text_color=color.red)
+    table.cell(marginTable, 2, 2, str.tostring(riskPercent / 100, format.percent), text_color=color.orange)
+
+    // New Row: Trade Metrics
+    table.cell(marginTable, 0, 3, "Position Size")
+    table.cell(marginTable, 1, 3, str.tostring(lastShares, format.volume))
+    table.cell(marginTable, 2, 3, "Stop: " + str.tostring(stopPrice, format.mintick))
